@@ -47,6 +47,8 @@ void UGrabber::Grab()
 	FVector Start = GetComponentLocation();
 	FVector End = Start + GetForwardVector() * MaxGrabDistance;
 	DrawDebugLine(GetWorld(), Start, End, FColor::Red);
+	DrawDebugSphere(GetWorld(), End, 10, 10, FColor::Blue, false, 5);
+
 	FCollisionShape Sphere = FCollisionShape::MakeSphere(GrabRadius);
 	FHitResult HitResult;
 	bool HasHit = GetWorld()->SweepSingleByChannel(HitResult, Start, End, FQuat::Identity, ECC_GameTraceChannel2, Sphere);
@@ -54,6 +56,8 @@ void UGrabber::Grab()
 	if (HasHit)
 	{
 		AActor* HitActor = HitResult.GetActor();
+		DrawDebugSphere(GetWorld(), HitResult.Location, 10, 10, FColor::Red, false, 5);
+		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10, 10, FColor::Green, false, 5);
 		UE_LOG(LogTemp, Display, TEXT("Actor name: %s"), *HitActor->GetActorNameOrLabel());
 	}
 	else
