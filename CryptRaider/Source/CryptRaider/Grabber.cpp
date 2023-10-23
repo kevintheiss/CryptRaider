@@ -22,16 +22,6 @@ void UGrabber::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UPhysicsHandleComponent* PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-	
-	if (PhysicsHandle != nullptr)
-	{
-		UE_LOG(LogTemp, Display, TEXT("Component name: %s"), *PhysicsHandle->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PhysicsHandle is null!"));
-	}
 }
 
 
@@ -40,10 +30,16 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UPhysicsHandleComponent* PhysicsHandle = GetPhysicsHandle();
+
+	FVector TargetLocation = GetComponentLocation() + GetForwardVector() * HoldDistance;
+	PhysicsHandle->SetTargetLocationAndRotation(TargetLocation, GetComponentRotation());
 }
 
 void UGrabber::Grab()
 {
+	UPhysicsHandleComponent* PhysicsHandle = GetPhysicsHandle();
+
 	FVector Start = GetComponentLocation();
 	FVector End = Start + GetForwardVector() * MaxGrabDistance;
 	DrawDebugLine(GetWorld(), Start, End, FColor::Red);
@@ -55,20 +51,26 @@ void UGrabber::Grab()
 
 	if (HasHit)
 	{
-		AActor* HitActor = HitResult.GetActor();
-		DrawDebugSphere(GetWorld(), HitResult.Location, 10, 10, FColor::Red, false, 5);
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10, 10, FColor::Green, false, 5);
-		UE_LOG(LogTemp, Display, TEXT("Actor name: %s"), *HitActor->GetActorNameOrLabel());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Display, TEXT("No actor hit"));
+		PhysicsHandle->GrabComponentAtLocationWithRotation(HitResult.GetComponent(), 
+			NAME_None, 
+			HitResult.ImpactPoint, 
+			HitResult.GetComponent()->GetComponentRotation());
 	}
 }
 
 void UGrabber::Release()
 {
 	UE_LOG(LogTemp, Display, TEXT("Released Grabber"));
+}
+
+UPhysicsHandleComponent* UGrabber::GetPhysicsHandle() const
+{
+	UPhysicsHandleComponent* Result = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+	if (Result == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Grabber requires a UPhysicsHandleComponent"));
+	}
+	return Result;
 }
 
 
